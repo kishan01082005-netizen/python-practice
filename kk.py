@@ -1,20 +1,20 @@
-# arr=[3,4,6,7,9,12,16,17]
-# target=9
-# low=0
-# high = len(arr)-1
-# while low<=high:
-#     mid=(low+high)//2
-#     if arr[mid]==target:
-#         print(mid)
-#         break
-#     elif target>arr[mid]:
-#         low=mid+1
-#     elif target<arr[mid]:
-#         high = mid-1
-#     else:
-#         print("not found ")
-# arr=[1,2,3,3,5,8,8,10,10,11]
-# x=8
+arr=[3,4,6,7,9,12,16,17]
+target=9
+low=0
+high = len(arr)-1
+while low<=high:
+    mid=(low+high)//2
+    if arr[mid]==target:
+        print(mid)
+        break
+    elif target>arr[mid]:
+        low=mid+1
+    elif target<arr[mid]:
+        high = mid-1
+    else:
+        print("not found ")
+arr=[1,2,3,3,5,8,8,10,10,11]
+x=8
 # low=0
 # high=len(arr)-1
 # ans=len(arr)
