@@ -5,18 +5,25 @@ class Node:
 
 # create nodes
 n1 = Node(10)
+
 n2 = Node(20)
 n3 = Node(30)
-n4 = Node(40)
 
 # connect nodes
 n1.next = n2
 n2.next = n3
-n3.next = n4
-temp=n1
+newnode=Node(40)
+k=1
 count=1
+temp=n1
 while temp:
-    if count%2==1:
-        print(temp.data)
+    if(count==k):
+        newnode.next=temp.next
+        temp.next=newnode
+        break
     temp=temp.next
     count+=1
+temp=n1
+while temp:
+    print(temp.data)
+    temp=temp.next

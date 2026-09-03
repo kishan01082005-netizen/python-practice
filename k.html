@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bhasha — Translate to Any Language</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&family=Noto+Sans+Kannada&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #151820;
+    --surface2: #1c2030;
+    --border: #2a2f45;
+    --accent: #e8a045;
+    --accent2: #c96a2b;
+    --text: #e8e4dc;
+    --muted: #6b7080;
+    --success: #4caf82;
+    --error: #e05c5c;
+    --glow: rgba(232, 160, 69, 0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Ambient background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; left: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(232,160,69,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -150px; right: -150px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(201,106,43,0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 28px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .logo-word {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  .logo-sub {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .badge {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #0d0f14;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  main {
+    position: relative;
+    z-index: 10;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 60px 24px 40px;
+  }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 52px;
+  }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 400;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 16px;
+    font-weight: 300;
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  /* Language selector */
+  .lang-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .lang-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .lang-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
+  .lang-pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 13px;
+    padding: 6px 14px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+  }
+
+  .lang-pill:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .lang-pill.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0d0f14;
+    font-weight: 500;
+  }
+
+  /* Custom select */
+  .lang-select-wrap {
+    position: relative;
+  }
+
+  .lang-select {
+    appearance: none;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 6px 32px 6px 14px;
+    border-radius: 30px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .lang-select:focus { border-color: var(--accent); }
+
+  .lang-select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+    font-size: 11px;
+  }
+
+  /* Translator panels */
+  .translator {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(232,160,69,0.04);
+  }
+
+  .panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 320px;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .panel-lang {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-lang .flag {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .panel-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .icon-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .icon-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--glow);
+  }
+
+  .panel textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.7;
+    padding: 24px;
+    resize: none;
+    placeholder-color: var(--muted);
+  }
+
+  .panel textarea::placeholder { color: var(--muted); }
+
+  .panel-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .char-count {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* Divider */
+  .divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    background: var(--surface2);
+    position: relative;
+  }
+
+  .swap-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    z-index: 2;
+  }
+
+  .swap-btn:hover {
+    background: var(--accent);
+    color: #0d0f14;
+    transform: rotate(180deg);
+    border-color: var(--accent);
+  }
+
+  /* Output panel */
+  .output-panel textarea {
+    color: var(--text);
+    cursor: default;
+  }
+
+  .output-panel .panel-header {
+    background: linear-gradient(to right, var(--surface2), rgba(232,160,69,0.05));
+  }
+
+  /* Translate button */
+  .translate-wrap {
+    text-align: center;
+    margin-top: 28px;
+  }
+
+  .translate-btn {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #0d0f14;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 14px 48px;
+    border-radius: 50px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.3s;
+    box-shadow: 0 4px 20px rgba(232,160,69,0.25);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .translate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(232,160,69,0.4);
+  }
+
+  .translate-btn:active { transform: translateY(0); }
+
+  .translate-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-top-color: #0d0f14;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .translate-btn.loading .spinner { display: block; }
+  .translate-btn.loading .btn-text { opacity: 0.7; }
+
+  /* Status */
+  .status {
+    text-align: center;
+    font-size: 13px;
+    margin-top: 14px;
+    min-height: 20px;
+    color: var(--muted);
+    transition: color 0.3s;
+  }
+
+  .status.success { color: var(--success); }
+  .status.error { color: var(--error); }
+
+  /* Quick examples */
+  .examples {
+    margin-top: 48px;
+    text-align: center;
+  }
+
+  .examples-title {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .example-chips {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .chip:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    background: var(--glow);
+  }
+
+  /* Language grid */
+  .lang-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 48px;
+  }
+
+  .lang-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .lang-card:hover {
+    border-color: var(--accent);
+    background: var(--glow);
+    transform: translateY(-2px);
+  }
+
+  .lang-card .emoji { font-size: 24px; margin-bottom: 6px; }
+  .lang-card .name { font-size: 13px; color: var(--text); }
+  .lang-card .native { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Copy toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--success);
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: transform 0.3s ease;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  footer {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 30px;
+    color: var(--muted);
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+    margin-top: 60px;
+  }
+
+  footer span { color: var(--accent); }
+
+  @media (max-width: 640px) {
+    header { padding: 18px 20px; }
+    main { padding: 40px 16px; }
+    .translator {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto auto;
+    }
+    .divider {
+      width: 100%;
+      height: 50px;
+      border-left: none;
+      border-right: none;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .panel { min-height: 200px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-word">Bhasha</span>
+    <span class="logo-sub">Translate</span>
+  </div>
+  <div class="badge">AI Powered</div>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>Translate to <em>any</em> language,<br>instantly.</h1>
+    <p>Powered by Claude AI. From Kannada to Swahili — every language, every script, every nuance.</p>
+  </div>
+
+  <!-- Target language selector -->
+  <div class="lang-bar">
+    <span class="lang-label">Translate to:</span>
+    <div class="lang-pills" id="langPills">
+      <button class="lang-pill active" data-lang="Kannada">🇮🇳 ಕನ್ನಡ</button>
+      <button class="lang-pill" data-lang="Hindi">🇮🇳 Hindi</button>
+      <button class="lang-pill" data-lang="Tamil">🇮🇳 Tamil</button>
+      <button class="lang-pill" data-lang="Telugu">🇮🇳 Telugu</button>
+      <button class="lang-pill" data-lang="French">🇫🇷 French</button>
+      <button class="lang-pill" data-lang="Spanish">🇪🇸 Spanish</button>
+      <button class="lang-pill" data-lang="Arabic">🇸🇦 Arabic</button>
+      <button class="lang-pill" data-lang="Japanese">🇯🇵 Japanese</button>
+    </div>
+    <div class="lang-select-wrap">
+      <select class="lang-select" id="customLang">
+        <option value="">More languages…</option>
+        <option value="German">German</option>
+        <option value="Italian">Italian</option>
+        <option value="Portuguese">Portuguese</option>
+        <option value="Russian">Russian</option>
+        <option value="Chinese (Simplified)">Chinese (Simplified)</option>
+        <option value="Chinese (Traditional)">Chinese (Traditional)</option>
+        <option value="Korean">Korean</option>
+        <option value="Bengali">Bengali</option>
+        <option value="Marathi">Marathi</option>
+        <option value="Gujarati">Gujarati</option>
+        <option value="Malayalam">Malayalam</option>
+        <option value="Punjabi">Punjabi</option>
+        <option value="Urdu">Urdu</option>
+        <option value="Swahili">Swahili</option>
+        <option value="Turkish">Turkish</option>
+        <option value="Dutch">Dutch</option>
+        <option value="Polish">Polish</option>
+        <option value="Vietnamese">Vietnamese</option>
+        <option value="Thai">Thai</option>
+        <option value="Greek">Greek</option>
+        <option value="Hebrew">Hebrew</option>
+        <option value="Swedish">Swedish</option>
+        <option value="Norwegian">Norwegian</option>
+        <option value="Danish">Danish</option>
+        <option value="Finnish">Finnish</option>
+        <option value="Malay">Malay</option>
+        <option value="Indonesian">Indonesian</option>
+        <option value="Nepali">Nepali</option>
+        <option value="Sinhala">Sinhala</option>
+        <option value="Amharic">Amharic</option>
+        <option value="Yoruba">Yoruba</option>
+        <option value="Zulu">Zulu</option>
+        <option value="Latin">Latin</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Translator UI -->
+  <div class="translator">
+    <!-- Input panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-lang">
+          <span class="flag">🌐</span>
+          <span>Source Text</span>
+        </div>
+        <div class="panel-actions">
+          <button class="icon-btn" id="clearBtn" title="Clear">✕</button>
+        </div>
+      </div>
+      <textarea id="inputText" placeholder="Type or paste text here…" maxlength="2000"></textarea>
+      <div class="panel-footer">
+        <span class="char-count"><span id="charCount">0</span> / 2000</span>
+      </div>
+    </div>
+
+    <!-- Swap divider -->
+    <div class="divider">
+      <button class="swap-btn" id="swapBtn" title="Swap">⇄</button>
+    </div>
+
+    <!-- Output panel -->
+    <div class="panel output-panel">
+      <div class="panel-header">
+        <div class="panel-lang">
+          <span class="flag" id="outputFlag">🇮🇳</span>
+          <span id="outputLangLabel">Kannada</span>
+        </div>
+        <div class="panel-actions">
+          <button class="icon-btn" id="copyBtn" title="Copy translation">⎘</button>
+          <button class="icon-btn" id="speakBtn" title="Read aloud">♪</button>
+        </div>
+      </div>
+      <textarea id="outputText" placeholder="Translation will appear here…" readonly></textarea>
+      <div class="panel-footer">
+        <span class="char-count" id="outCharCount"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Translate button -->
+  <div class="translate-wrap">
+    <button class="translate-btn" id="translateBtn">
+      <div class="spinner"></div>
+      <span class="btn-text">Translate</span>
+    </button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <!-- Quick examples -->
+  <div class="examples">
+    <div class="examples-title">Try an example</div>
+    <div class="example-chips">
+      <button class="chip" data-text="Hello, how are you?">Hello, how are you?</button>
+      <button class="chip" data-text="Where is the nearest hospital?">Nearest hospital?</button>
+      <button class="chip" data-text="I love learning new languages!">I love learning languages!</button>
+      <button class="chip" data-text="What is your name?">What is your name?</button>
+      <button class="chip" data-text="Good morning! Have a wonderful day.">Good morning!</button>
+      <button class="chip" data-text="Thank you very much for your help.">Thank you very much</button>
+    </div>
+  </div>
+
+  <!-- Language grid -->
+  <div class="lang-grid" id="langGrid">
+    <div class="lang-card" data-lang="Kannada"><div class="emoji">🇮🇳</div><div class="name">Kannada</div><div class="native">ಕನ್ನಡ</div></div>
+    <div class="lang-card" data-lang="Hindi"><div class="emoji">🇮🇳</div><div class="name">Hindi</div><div class="native">हिन्दी</div></div>
+    <div class="lang-card" data-lang="Tamil"><div class="emoji">🇮🇳</div><div class="name">Tamil</div><div class="native">தமிழ்</div></div>
+    <div class="lang-card" data-lang="Telugu"><div class="emoji">🇮🇳</div><div class="name">Telugu</div><div class="native">తెలుగు</div></div>
+    <div class="lang-card" data-lang="Bengali"><div class="emoji">🇧🇩</div><div class="name">Bengali</div><div class="native">বাংলা</div></div>
+    <div class="lang-card" data-lang="Malayalam"><div class="emoji">🇮🇳</div><div class="name">Malayalam</div><div class="native">മലയാളം</div></div>
+    <div class="lang-card" data-lang="Arabic"><div class="emoji">🇸🇦</div><div class="name">Arabic</div><div class="native">العربية</div></div>
+    <div class="lang-card" data-lang="Japanese"><div class="emoji">🇯🇵</div><div class="name">Japanese</div><div class="native">日本語</div></div>
+    <div class="lang-card" data-lang="Chinese (Simplified)"><div class="emoji">🇨🇳</div><div class="name">Chinese</div><div class="native">中文</div></div>
+    <div class="lang-card" data-lang="French"><div class="emoji">🇫🇷</div><div class="name">French</div><div class="native">Français</div></div>
+    <div class="lang-card" data-lang="Spanish"><div class="emoji">🇪🇸</div><div class="name">Spanish</div><div class="native">Español</div></div>
+    <div class="lang-card" data-lang="Swahili"><div class="emoji">🇰🇪</div><div class="name">Swahili</div><div class="native">Kiswahili</div></div>
+  </div>
+</main>
+
+<footer>
+  Built with <span>Bhasha</span> — Powered by Claude AI &middot; Translate to 100+ languages
+</footer>
+
+<div class="toast" id="toast">Copied to clipboard!</div>
+
+<script>
+  const langFlags = {
+    'Kannada': '🇮🇳', 'Hindi': '🇮🇳', 'Tamil': '🇮🇳', 'Telugu': '🇮🇳',
+    'Bengali': '🇧🇩', 'Malayalam': '🇮🇳', 'Marathi': '🇮🇳', 'Gujarati': '🇮🇳',
+    'Punjabi': '🇮🇳', 'Urdu': '🇵🇰', 'Nepali': '🇳🇵', 'Sinhala': '🇱🇰',
+    'Arabic': '🇸🇦', 'Japanese': '🇯🇵', 'Korean': '🇰🇷',
+    'Chinese (Simplified)': '🇨🇳', 'Chinese (Traditional)': '🇹🇼',
+    'French': '🇫🇷', 'Spanish': '🇪🇸', 'German': '🇩🇪', 'Italian': '🇮🇹',
+    'Portuguese': '🇵🇹', 'Russian': '🇷🇺', 'Dutch': '🇳🇱', 'Polish': '🇵🇱',
+    'Swedish': '🇸🇪', 'Norwegian': '🇳🇴', 'Danish': '🇩🇰', 'Finnish': '🇫🇮',
+    'Greek': '🇬🇷', 'Hebrew': '🇮🇱', 'Turkish': '🇹🇷', 'Thai': '🇹🇭',
+    'Vietnamese': '🇻🇳', 'Malay': '🇲🇾', 'Indonesian': '🇮🇩',
+    'Swahili': '🇰🇪', 'Amharic': '🇪🇹', 'Yoruba': '🇳🇬', 'Zulu': '🇿🇦',
+    'Latin': '🏛️',
+  };
+
+  let selectedLang = 'Kannada';
+
+  function setLang(lang) {
+    selectedLang = lang;
+    document.getElementById('outputLangLabel').textContent = lang;
+    document.getElementById('outputFlag').textContent = langFlags[lang] || '🌐';
+    // update pills
+    document.querySelectorAll('.lang-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.lang === lang);
+    });
+    // clear custom select if it was a pill
+    const select = document.getElementById('customLang');
+    const matchesSelect = [...select.options].some(o => o.value === lang);
+    if (!matchesSelect) select.value = '';
+  }
+
+  // Pills
+  document.getElementById('langPills').addEventListener('click', e => {
+    const pill = e.target.closest('.lang-pill');
+    if (pill) { setLang(pill.dataset.lang); document.getElementById('customLang').value = ''; }
+  });
+
+  // Custom select
+  document.getElementById('customLang').addEventListener('change', e => {
+    if (e.target.value) setLang(e.target.value);
+  });
+
+  // Lang grid cards
+  document.getElementById('langGrid').addEventListener('click', e => {
+    const card = e.target.closest('.lang-card');
+    if (card) setLang(card.dataset.lang);
+  });
+
+  // Char count
+  const inputText = document.getElementById('inputText');
+  inputText.addEventListener('input', () => {
+    document.getElementById('charCount').textContent = inputText.value.length;
+  });
+
+  // Clear
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    inputText.value = '';
+    document.getElementById('outputText').value = '';
+    document.getElementById('charCount').textContent = '0';
+    document.getElementById('outCharCount').textContent = '';
+    document.getElementById('status').textContent = '';
+    document.getElementById('status').className = 'status';
+  });
+
+  // Example chips
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      inputText.value = chip.dataset.text;
+      document.getElementById('charCount').textContent = inputText.value.length;
+    });
+  });
+
+  // Swap
+  document.getElementById('swapBtn').addEventListener('click', () => {
+    const out = document.getElementById('outputText').value;
+    if (out) {
+      inputText.value = out;
+      document.getElementById('charCount').textContent = inputText.value.length;
+      document.getElementById('outputText').value = '';
+      document.getElementById('outCharCount').textContent = '';
+    }
+  });
+
+  // Copy
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    const val = document.getElementById('outputText').value;
+    if (!val) return;
+    navigator.clipboard.writeText(val).then(() => {
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    });
+  });
+
+  // Speak
+  document.getElementById('speakBtn').addEventListener('click', () => {
+    const val = document.getElementById('outputText').value;
+    if (!val || !window.speechSynthesis) return;
+    const utt = new SpeechSynthesisUtterance(val);
+    window.speechSynthesis.speak(utt);
+  });
+
+  // Translate
+  document.getElementById('translateBtn').addEventListener('click', translate);
+  inputText.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.key === 'Enter') translate();
+  });
+
+  async function translate() {
+    const text = inputText.value.trim();
+    if (!text) {
+      setStatus('Please enter some text to translate.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('translateBtn');
+    btn.classList.add('loading');
+    btn.disabled = true;
+    setStatus('Translating…', '');
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: `Translate the following text to ${selectedLang}. 
+Return ONLY the translation — no explanations, no notes, no original text, no labels. Just the translated text.
+
+Text to translate:
+${text}`
+          }]
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.error) throw new Error(data.error.message || 'API error');
+
+      const translated = data.content
+        .filter(b => b.type === 'text')
+        .map(b => b.text)
+        .join('');
+
+      document.getElementById('outputText').value = translated;
+      document.getElementById('outCharCount').textContent = `${translated.length} chars`;
+      setStatus(`✓ Translated to ${selectedLang}`, 'success');
+    } catch (err) {
+      setStatus('Translation failed. Please try again.', 'error');
+      console.error(err);
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  }
+
+  function setStatus(msg, type) {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    el.className = 'status' + (type ? ' ' + type : '');
+  }
+</script>
+</body>
+</html>

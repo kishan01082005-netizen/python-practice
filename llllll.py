@@ -5,18 +5,17 @@ class Node:
 
 # create nodes
 n1 = Node(10)
+
 n2 = Node(20)
 n3 = Node(30)
-n4 = Node(40)
 
 # connect nodes
 n1.next = n2
 n2.next = n3
-n3.next = n4
-temp=n1
-count=1
-while temp:
-    if count%2==1:
-        print(temp.data)
-    temp=temp.next
-    count+=1
+head=n1
+slow=head
+fast=head
+while fast and fast.next:
+    slow=slow.next
+    fast=fast.next.next
+print(slow.data)
